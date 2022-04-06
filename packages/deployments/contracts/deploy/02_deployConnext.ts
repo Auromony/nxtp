@@ -43,10 +43,29 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment): Promise<voi
     (await hre.deployments.getOrNull("TokenRegistry"))!.abi,
   ).connect(deployer);
 
+  // Deploy Connext logic libraries
+  const assetLogic = await hre.deployments.deploy('AssetLogic', {
+    from: deployer.address,
+    log: true,
+  });
+  const connextUtils = await hre.deployments.deploy('ConnextUtils', {
+    from: deployer.address,
+    log: true,
+  });
+  const routerPermissionsManagerLogic = await hre.deployments.deploy('RouterPermissionsManagerLogic', {
+    from: deployer.address,
+    log: true,
+  });
+
   // Deploy connext contract
   const connext = await hre.deployments.deploy("Connext", {
     from: deployer.address,
     log: true,
+    libraries: {
+      AssetLogic: assetLogic.address,
+      ConnextUtils: connextUtils.address,
+      RouterPermissionsManagerLogic: routerPermissionsManagerLogic.address,
+    },
     proxy: {
       execute: {
         init: {
@@ -62,7 +81,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment): Promise<voi
   console.log("connextAddress: ", connextAddress);
 
   // Add tm to bridge
-  if ((await bridge.connext) !== connextAddress) {
+  if ((await bridge.connext()) !== connextAddress) {
     console.log("setting connext on bridge");
     const addTm = await bridge.connect(deployer).setConnext(connextAddress);
     await addTm.wait();

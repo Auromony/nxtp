@@ -13,6 +13,7 @@ import { SubgraphReader } from "@connext/nxtp-adapters-subgraph";
 import { StoreManager } from "@connext/nxtp-adapters-cache";
 import { Web3Signer } from "@connext/nxtp-adapters-web3signer";
 import { getContractInterfaces, TransactionService, contractDeployments } from "@connext/nxtp-txservice";
+import axios from "axios";
 
 import { getConfig } from "./config";
 import { bindMetrics, bindPrices, bindSubgraph, bindServer } from "./bindings";
@@ -69,8 +70,22 @@ export const makeRouter = async () => {
       config: Object.assign(context.config, context.config.mnemonic ? { mnemonic: "......." } : { mnemonic: "N/A" }),
     });
 
+    try {
+      const res = await axios.get(`${context.config.sequencerUrl}/ping`);
+      context.logger.info("Ping response received from sequencer", requestContext, methodContext, {
+        response: res.data,
+      });
+    } catch (e: unknown) {
+      context.logger.error(
+        "Ping error, could not reach sequencer. Exiting!",
+        requestContext,
+        methodContext,
+        jsonifyError(e as Error),
+      );
+      process.exit(1);
+    }
+
     // TODO: Cold start housekeeping.
-    // - send a ping request to sequencer
     // - read subgraph to make sure router is approved
     // - read contract or subgraph for current liquidity in each asset, cache it
     // - read subgraph to make sure each asset is (still) approved
@@ -88,7 +103,7 @@ export const makeRouter = async () => {
     await bindSubgraph();
 
     logger.info("Router ready!");
-  } catch (e) {
+  } catch (e: unknown) {
     console.error("Error starting router. Sad! :(", e);
     process.exit();
   }
@@ -96,7 +111,7 @@ export const makeRouter = async () => {
 
 export const setupCache = async (requestContext: RequestContext): Promise<StoreManager> => {
   const {
-    config: { redisUrl },
+    config: { redis },
     logger,
   } = context;
   const { execute } = getOperations();
@@ -105,13 +120,13 @@ export const setupCache = async (requestContext: RequestContext): Promise<StoreM
   logger.info("Cache instance setup in progress...", requestContext, methodContext, {});
 
   const cacheInstance = StoreManager.getInstance({
-    redis: redisUrl ? { url: redisUrl } : undefined,
-    mock: redisUrl ? false : true,
+    redis: { host: redis.host, port: redis.port, instance: undefined },
+    mock: !redis.host || !redis.port,
     logger: logger.child({ module: "StoreManager" }),
   });
 
   // Subscribe to `NewXCall` channel and attach execute handler.
-  cacheInstance.consumers.subscribe(StoreManager.Channel.NewXCall, async (pendingTx) => {
+  cacheInstance.consumers.subscribe(StoreManager.Channel.NewXCall, async (pendingTx: string) => {
     const { requestContext, methodContext } = createLoggingContext("NewXCallHandler");
 
     const incomingTx = JSON.parse(pendingTx) as XTransfer;
@@ -133,8 +148,8 @@ export const setupCache = async (requestContext: RequestContext): Promise<StoreM
     };
     try {
       await execute(tx);
-    } catch (err: any) {
-      logger.error("Error executing transaction", requestContext, methodContext, jsonifyError(err), {
+    } catch (err: unknown) {
+      logger.error("Error executing transaction", requestContext, methodContext, jsonifyError(err as Error), {
         tx,
         xcall: tx.xcall,
       });
@@ -142,7 +157,8 @@ export const setupCache = async (requestContext: RequestContext): Promise<StoreM
   });
 
   logger.info("Cache instance setup is done!", requestContext, methodContext, {
-    redisUrl: redisUrl,
+    host: redis.host,
+    port: redis.port,
   });
 
   return cacheInstance;

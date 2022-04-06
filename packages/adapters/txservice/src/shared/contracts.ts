@@ -1,13 +1,11 @@
 import { utils } from "ethers";
 import _contractDeployments from "@connext/nxtp-contracts/deployments.json";
-import { Interface } from "ethers/lib/utils";
 import {
   Connext as TConnext,
   ConnextPriceOracle as TConnextPriceOracle,
   TokenRegistry as TTokenRegistry,
   StableSwap as TStableSwap,
 } from "@connext/nxtp-contracts/typechain-types";
-
 import PriceOracleArtifact from "@connext/nxtp-contracts/artifacts/contracts/ConnextPriceOracle.sol/ConnextPriceOracle.json";
 import ConnextArtifact from "@connext/nxtp-contracts/artifacts/contracts/Connext.sol/Connext.json";
 import StableSwapArtifact from "@connext/nxtp-contracts/artifacts/contracts/StableSwap.sol/StableSwap.json";
@@ -17,7 +15,7 @@ import TokenRegistryArtifact from "@connext/nxtp-contracts/artifacts/contracts/n
 /**
  * Helper to allow easy mocking
  */
-export const _getContractDeployments: any = () => {
+export const _getContractDeployments = (): Record<string, Record<string, any>> => {
   return _contractDeployments;
 };
 
@@ -42,7 +40,7 @@ export const CHAINS_WITH_PRICE_ORACLES: number[] = ((): number[] => {
   const _contractDeployments = _getContractDeployments();
   Object.keys(_contractDeployments).forEach((chainId) => {
     const record = _contractDeployments[chainId];
-    const chainName = Object.keys(record)[0];
+    const chainName = Object.keys(record)[0] as string | undefined;
     if (chainName) {
       const priceOracleContract = record[chainName]?.contracts?.ConnextPriceOracle;
       if (priceOracleContract) {
@@ -65,7 +63,7 @@ export const CHAINS_WITH_PRICE_ORACLES: number[] = ((): number[] => {
 export const getDeployedPriceOracleContract = (chainId: number): { address: string; abi: any } | undefined => {
   const _contractDeployments = _getContractDeployments();
   const record = _contractDeployments[chainId.toString()] ?? {};
-  const name = Object.keys(record)[0];
+  const name = Object.keys(record)[0] as string | undefined;
   if (!name) {
     return undefined;
   }
@@ -96,14 +94,15 @@ export const contractDeployments: ConnextContractDeployments = {
  * @returns An ethers Interface object initialized for the corresponding ABI.
  */
 
-export const getConnextInterface = () => new Interface(ConnextArtifact.abi) as TConnext["interface"];
+export const getConnextInterface = () => new utils.Interface(ConnextArtifact.abi) as TConnext["interface"];
 
 export const getPriceOracleInterface = () =>
   new utils.Interface(PriceOracleArtifact.abi) as TConnextPriceOracle["interface"];
 
-export const getTokenRegistryInterface = () => new Interface(TokenRegistryArtifact.abi) as TTokenRegistry["interface"];
+export const getTokenRegistryInterface = () =>
+  new utils.Interface(TokenRegistryArtifact.abi) as TTokenRegistry["interface"];
 
-export const getStableSwapInterface = () => new Interface(StableSwapArtifact.abi) as TStableSwap["interface"];
+export const getStableSwapInterface = () => new utils.Interface(StableSwapArtifact.abi) as TStableSwap["interface"];
 
 export type ConnextContractInterfaces = {
   connext: TConnext["interface"];

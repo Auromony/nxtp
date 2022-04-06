@@ -1,5 +1,4 @@
 import { Type, Static } from "@sinclair/typebox";
-
 import { TAddress } from "@connext/nxtp-utils";
 import { SubgraphReaderChainConfigSchema } from "@connext/nxtp-adapters-subgraph";
 
@@ -19,6 +18,11 @@ export const TServerConfig = Type.Object({
   host: Type.String({ format: "ipv4" }),
 });
 
+export const TRedisConfig = Type.Object({
+  port: Type.Optional(Type.Integer({ minimum: 1, maximum: 65535 })),
+  host: Type.Optional(Type.String()),
+});
+
 export const TModeConfig = Type.Object({
   cleanup: Type.Boolean(),
 });
@@ -35,7 +39,7 @@ export const SequencerConfigSchema = Type.Object({
     Type.Literal("silent"),
   ]),
   network: Type.Union([Type.Literal("testnet"), Type.Literal("mainnet"), Type.Literal("local")]),
-  redisUrl: Type.Optional(Type.String({ format: "uri" })),
+  redis: TRedisConfig,
   server: TServerConfig,
   mode: TModeConfig,
   auctionWaitTime: Type.Number({ minimum: 1000, maximum: 500_000 }),

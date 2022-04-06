@@ -2,7 +2,6 @@ import axios, { AxiosResponse } from "axios";
 import { request as graphQLRequest } from "graphql-request";
 import PriorityQueue from "p-queue";
 
-import { ChainData } from ".";
 import { NxtpError } from "../types";
 
 // TODO: This is a great starting point for moving implementations of graphqlsdk-generated
@@ -232,9 +231,9 @@ export class FallbackSubgraph<T> {
             try {
               const result = await withRetries(async () => await method(subgraph.client, subgraph.url));
               success = true;
-              resolve(result);
-            } catch (e) {
-              reject(e);
+              resolve(result as Q);
+            } catch (e: unknown) {
+              reject(e as Error);
             } finally {
               subgraph.metrics.calls.push({
                 timestamp: startTime,
@@ -246,8 +245,8 @@ export class FallbackSubgraph<T> {
           }),
           new Promise<Q>((_, reject) => setTimeout(() => reject(new NxtpError("Timeout")), this.stallTimeout)),
         ]);
-      } catch (e: any) {
-        errors.push(e);
+      } catch (e: unknown) {
+        errors.push(e as Error);
       }
     }
     throw new NxtpError("Unable to handle request", {
@@ -308,7 +307,7 @@ export class FallbackSubgraph<T> {
       if (healthEndpointSupported) {
         const chainHeadBlock = Math.max(...response!.data.map((item) => item.data.chainHeadBlock));
         // Parse the response, handle each subgraph in the response.
-        response!.data.forEach((item: any) => {
+        response!.data.forEach((item: { url: string; data: any }) => {
           const info = item.data;
           // If we don't have this subgraph mapped, create a new one to work with.
           const subgraph: Subgraph<T> = this.subgraphs.get(item.url) ?? this.createSubgraphRecord(item.url);
@@ -330,11 +329,13 @@ export class FallbackSubgraph<T> {
           this.subgraphs.set(item.url, subgraph);
         });
       } else if (getBlockNumberSupported) {
-        const _latestBlock = getBlockNumber!();
+        const _latestBlock = getBlockNumber();
         await Promise.all(
           Array.from(this.subgraphs.values()).map(async (subgraph) => {
             try {
-              const { _meta } = await withRetries(async () => await (subgraph.client as any).GetBlockNumber());
+              const { _meta } = (await withRetries(async () => await (subgraph.client as any).GetBlockNumber())) as {
+                _meta: { block: { number: string } };
+              };
               const syncedBlockValid =
                 _meta && _meta.block && _meta.block.number && !isNaN(parseInt(_meta.block.number));
               const syncedBlock: number = syncedBlockValid ? parseInt(_meta.block.number) : 0;
@@ -352,7 +353,7 @@ export class FallbackSubgraph<T> {
                 lag: Math.max(0, lag ?? this.maxLag),
               };
               this.subgraphs.set(subgraph.url, subgraph);
-            } catch (e) {
+            } catch (e: unknown) {
               // Update only the error field in the record.
               subgraph.record = {
                 ...subgraph.record,
@@ -466,57 +467,3 @@ export class FallbackSubgraph<T> {
     };
   }
 }
-
-// TODO: Remove, replace with API call / hosted data.
-export const getDeployedAnalyticsSubgraphUrls = (chainId: number, chainData?: Map<string, ChainData>): string[] => {
-  if (chainData) {
-    const subgraph = chainData.get(chainId.toString())?.analyticsSubgraph;
-    if (subgraph) {
-      return subgraph;
-    }
-  }
-
-  switch (chainId) {
-    // testnets
-    case 3:
-      return ["https://api.thegraph.com/subgraphs/name/connext/nxtp-ropsten-v1-analytics"];
-    case 4:
-      return ["https://api.thegraph.com/subgraphs/name/connext/nxtp-rinkeby-v1-analytics"];
-    case 5:
-      return ["https://api.thegraph.com/subgraphs/name/connext/nxtp-goerli-v1-analytics"];
-    case 42:
-      return ["https://api.thegraph.com/subgraphs/name/connext/nxtp-kovan-v1-analytics"];
-    case 69:
-      return ["https://api.thegraph.com/subgraphs/name/connext/nxtp-optimism-kovan-v1-analytics"];
-    case 97:
-      return ["https://api.thegraph.com/subgraphs/name/connext/nxtp-chapel-v1-analytics"];
-    case 80001:
-      return ["https://api.thegraph.com/subgraphs/name/connext/nxtp-mumbai-v1-analytics"];
-    case 421611:
-      return ["https://api.thegraph.com/subgraphs/name/connext/nxtp-arbitrum-rinkeby-v1-analytics"];
-
-    // mainnets
-    case 1:
-      return ["https://api.thegraph.com/subgraphs/name/connext/nxtp-mainnet-v1-analytics"];
-    case 10:
-      return ["https://api.thegraph.com/subgraphs/name/connext/nxtp-optimism-v1-analytics"];
-    case 56:
-      return ["https://api.thegraph.com/subgraphs/name/connext/nxtp-bsc-v1-analytics"];
-    case 100:
-      return ["https://api.thegraph.com/subgraphs/name/connext/nxtp-xdai-v1-analytics"];
-    case 122:
-      return ["https://api.thegraph.com/subgraphs/name/connext/nxtp-fuse-v1-analytics"];
-    case 137:
-      return ["https://connext.bwarelabs.com/subgraphs/name/connext/nxtp-matic-v1-analytics"];
-    case 250:
-      return ["https://api.thegraph.com/subgraphs/name/connext/nxtp-fantom-v1-analytics"];
-    case 1285:
-      return ["https://api.thegraph.com/subgraphs/name/connext/nxtp-moonriver-v1-analytics"];
-    case 42161:
-      return ["https://api.thegraph.com/subgraphs/name/connext/nxtp-arbitrum-one-v1-analytics"];
-    case 43114:
-      return ["https://api.thegraph.com/subgraphs/name/connext/nxtp-avalanche-v1-analytics"];
-    default:
-      return [];
-  }
-};

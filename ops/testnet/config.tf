@@ -1,7 +1,10 @@
 locals {
   local_sequencer_config = jsonencode({
+    redis =  {
+      host: module.sequencer_cache.redis_instance_address,
+      port: module.sequencer_cache.redis_instance_port
+    },
     "logLevel" = "debug"
-    "redisUrl" = "redis://${module.sequencer_cache.redis_instance_address}:6379"
     "chains" = {
       "2000" = {
         "providers" = ["https://rinkeby.infura.io/v3/19b854cad0bc4089bffd0c93f23ece9f"]
@@ -9,12 +12,9 @@ locals {
           "runtime"   = ["https://api.thegraph.com/subgraphs/name/connext/nxtp-amarok-runtime-v0-rinkeby"]
           "analytics" = [""]
         }
-        "deployments" = {
-          "transactionManager" = "0xd6d9d8E6304C460b40022e467d8A8748962Eb0B0"
-        }
         "assets" = [{
           "name"    = "TEST"
-          "address" = "0xf4CF3FcC8dC7E5171Bb08bef75EDe3fEf00F46E6"
+          "address" = "0xcF4d2994088a8CDE52FB584fE29608b63Ec063B2"
         }]
       }
       "3000" = {
@@ -23,12 +23,9 @@ locals {
           "runtime" = ["https://api.thegraph.com/subgraphs/name/connext/nxtp-amarok-runtime-v0-kovan"]
           "analytics" : [""]
         }
-        "deployments" = {
-          "transactionManager" = "0x9F929643db56eaf747131CB4FA1126612b30Eb7F"
-        }
         "assets" = [{
           "name"    = "TEST"
-          "address" = "0xe71678794fff8846bFF855f716b0Ce9d9a78E844"
+          "address" = "0xB5AabB55385bfBe31D627E2A717a7B189ddA4F8F"
         }]
       }
     }
@@ -38,12 +35,15 @@ locals {
 
 locals {
   local_router_config = jsonencode({
+    redis =  {
+      host: module.router_cache.redis_instance_address,
+      port: module.router_cache.redis_instance_port
+    },
     logLevel     = "debug"
-    sequencerUrl =  "http://${module.sequencer.dns_name}:8080"
-    redisUrl     = "redis://${module.router_cache.redis_instance_address}:6379"
+    sequencerUrl = "https://${module.sequencer.service_endpoint}"
     server = {
       adminToken = var.admin_token_router
-      port = 8080
+      port       = 8080
     }
     chains = {
       2000 = {
@@ -52,13 +52,10 @@ locals {
           runtime = ["https://api.thegraph.com/subgraphs/name/connext/nxtp-amarok-runtime-v0-rinkeby"]
           analytics : [""]
         }
-        deployments = {
-          transactionManager : "0xd6d9d8E6304C460b40022e467d8A8748962Eb0B0"
-        }
         assets = [
           {
             name    = "TEST"
-            address = "0x80dA4efc379E9ab45D2032F9EDf4D4aBc4EF2f9d"
+            address = "0xcF4d2994088a8CDE52FB584fE29608b63Ec063B2"
           }
         ]
       }
@@ -68,13 +65,10 @@ locals {
           runtime   = ["https://api.thegraph.com/subgraphs/name/connext/nxtp-amarok-runtime-v0-kovan"]
           analytics = [""]
         }
-        deployments = {
-          transactionManager = "0x9F929643db56eaf747131CB4FA1126612b30Eb7F"
-        }
         assets = [
           {
             name    = "TEST"
-            address = "0xe71678794fff8846bFF855f716b0Ce9d9a78E844"
+            address = "0xB5AabB55385bfBe31D627E2A717a7B189ddA4F8F"
           }
         ]
       }

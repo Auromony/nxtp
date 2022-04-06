@@ -76,10 +76,13 @@ contract ConnextTest is ForgeConnextHelper {
     connext.removeRouter(address(1));
   }
 
-  // Should work
-  function testRemoveRouter() public {
-    setApprovedRouter(address(1), true);
-    connext.removeRouter(address(1));
-    assertTrue(!connext.approvedRouters(address(1)));
+  function setRouterOwner(address _router, address _owner) internal {
+    stdstore.target(address(connext)).sig(connext.routerOwners.selector).with_key(_router).checked_write(_owner);
+  }
+
+  function setRouterRecipient(address _router, address _recipient) internal {
+    stdstore.target(address(connext)).sig(connext.routerRecipients.selector).with_key(_router).checked_write(
+      _recipient
+    );
   }
 }

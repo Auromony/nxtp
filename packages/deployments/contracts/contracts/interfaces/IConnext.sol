@@ -105,20 +105,6 @@ interface IConnext {
   // ============ Events ============
 
   /**
-   * @notice Emitted when a new router is added
-   * @param router - The address of the added router
-   * @param caller - The account that called the function
-   */
-  event RouterAdded(address router, address caller);
-
-  /**
-   * @notice Emitted when an existing router is removed
-   * @param router - The address of the removed router
-   * @param caller - The account that called the function
-   */
-  event RouterRemoved(address router, address caller);
-
-  /**
    * @notice Emitted when a new stable-swap AMM is added for the local <> adopted token
    * @param canonicalId - The canonical identifier of the token the local <> adopted AMM is for
    * @param domain - The domain of the canonical token for the local <> adopted amm
@@ -162,7 +148,7 @@ interface IConnext {
    * @param amount - The amount of liquidity added
    * @param caller - The account that called the function
    */
-  event LiquidityAdded(address router, address local, bytes32 canonicalId, uint256 amount, address caller);
+  event LiquidityAdded(address indexed router, address local, bytes32 canonicalId, uint256 amount, address caller);
 
   /**
    * @notice Emitted when `xcall` is called on the origin domain
@@ -194,18 +180,20 @@ interface IConnext {
   /**
    * @notice Emitted when `reconciled` is called by the bridge on the destination domain
    * @param transferId - The unique identifier of the crosschain transaction
-   * @param to - The CallParams.recipient provided, created as indexed parameter
+   * @param origin - The origin domain of the transfer
    * @param router - The router that supplied fast liquidity, if applicable
    * @param localAsset - The asset that was provided by the bridge
+   * @param to - The CallParams.recipient provided, created as indexed parameter
    * @param localAmount - The amount that was provided by the bridge
    * @param executed - Record of the `ExecutedTransfer` stored onchain if fast liquidity is provided
    * @param caller - The account that called the function
    */
   event Reconciled(
     bytes32 indexed transferId,
-    address indexed to,
+    uint32 indexed origin,
     address indexed router,
     address localAsset,
+    address to,
     uint256 localAmount,
     ExecutedTransfer executed,
     address caller
@@ -247,7 +235,11 @@ interface IConnext {
     address _wrappedNative
   ) external;
 
-  function addRouter(address router) external;
+  function setupRouter(
+    address router,
+    address owner,
+    address recipient
+  ) external;
 
   function removeRouter(address router) external;
 
@@ -285,6 +277,7 @@ interface IConnext {
 
   function reconcile(
     bytes32 _transferId,
+    uint32 _origin,
     address _local,
     address _recipient,
     uint256 _amount

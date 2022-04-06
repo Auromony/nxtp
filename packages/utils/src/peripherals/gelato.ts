@@ -1,6 +1,9 @@
 import axios from "axios";
 import { BigNumber } from "ethers";
 
+import { Logger } from "../logging";
+import { jsonifyError } from "../types";
+
 const gelatoServer = "https://relay.gelato.digital";
 
 export const gelatoSend = async (
@@ -9,6 +12,7 @@ export const gelatoSend = async (
   data: string,
   token: string,
   relayerFee: string,
+  logger?: Logger,
 ): Promise<any> => {
   const params = { dest, data, token, relayerFee };
 
@@ -16,8 +20,8 @@ export const gelatoSend = async (
   try {
     const res = await axios.post(`${gelatoServer}/relays/${chainId}`, params);
     output = res.data;
-  } catch (error) {
-    console.error(error);
+  } catch (error: unknown) {
+    if (logger) logger.error("Error in gelato send", undefined, undefined, jsonifyError(error as Error));
     output = error;
   }
   return output;
@@ -28,13 +32,13 @@ export const isChainSupportedByGelato = async (chainId: number): Promise<boolean
   return chainsSupportedByGelato.includes(chainId.toString());
 };
 
-export const getGelatoRelayChains = async (): Promise<string[]> => {
+export const getGelatoRelayChains = async (logger?: Logger): Promise<string[]> => {
   let result = [];
   try {
     const res = await axios.get(`${gelatoServer}/relays/`);
     result = res.data.relays;
-  } catch (error) {
-    console.error(error);
+  } catch (error: unknown) {
+    if (logger) logger.error("Error in getGelatoRelayChains", undefined, undefined, jsonifyError(error as Error));
   }
 
   return result;
@@ -45,6 +49,7 @@ export const getEstimatedFee = async (
   paymentToken: string,
   gasLimit: number,
   isHighPriority: boolean,
+  logger?: Logger,
 ): Promise<BigNumber> => {
   let result = BigNumber.from("0");
   const params = { paymentToken, gasLimit, isHighPriority };
@@ -52,8 +57,8 @@ export const getEstimatedFee = async (
   try {
     const res = await axios.get(`${gelatoServer}/oracles/${chainId}/estimate`, { params });
     result = BigNumber.from(res.data.estimatedFee);
-  } catch (error) {
-    console.error(error);
+  } catch (error: unknown) {
+    if (logger) logger.error("Error in getEstimatedFee", undefined, undefined, jsonifyError(error as Error));
   }
   return result;
 };
@@ -63,13 +68,13 @@ export const isOracleActive = async (chainId: number): Promise<boolean> => {
   return oracles.includes(chainId.toString());
 };
 
-export const getGelatoOracles = async (): Promise<string[]> => {
+export const getGelatoOracles = async (logger?: Logger): Promise<string[]> => {
   let result = [];
   try {
     const res = await axios.get(`${gelatoServer}/oracles/`);
     result = res.data.oracles;
-  } catch (error) {
-    console.error(error);
+  } catch (error: unknown) {
+    if (logger) logger.error("Error in getGelatoOracles", undefined, undefined, jsonifyError(error as Error));
   }
 
   return result;
@@ -83,13 +88,13 @@ export const isPaymentTokenSupported = async (chainId: number, token: string): P
   return lowerPaymentTokens.includes(token.toString().toLowerCase());
 };
 
-export const getPaymentTokens = async (chainId: number): Promise<string[]> => {
+export const getPaymentTokens = async (chainId: number, logger?: Logger): Promise<string[]> => {
   let result = [];
   try {
     const res = await axios.get(`${gelatoServer}/oracles/${chainId}/paymentTokens/`);
     result = res.data.paymentTokens;
-  } catch (error) {
-    console.error(error);
+  } catch (error: unknown) {
+    if (logger) logger.error("Error in getPaymentTokens", undefined, undefined, jsonifyError(error as Error));
   }
 
   return result;

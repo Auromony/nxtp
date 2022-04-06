@@ -1,5 +1,8 @@
 import * as fs from "fs";
+
 import { fetchJson } from "../ethers";
+import { Logger } from "../logging";
+import { jsonifyError } from "../types";
 
 export const CHAIN_ID = {
   MAINNET: 1,
@@ -75,11 +78,11 @@ export const chainDataToMap = (data: any): Map<string, ChainData> => {
   const noDomainIdFound: string[] = [];
   for (let i = 0; i < data.length; i++) {
     const item = data[i];
-    const domainId = item.domainId;
+    const domainId = item.domainId as string | undefined;
     if (domainId) {
       chainData.set(domainId, item as ChainData);
     } else {
-      noDomainIdFound.push(item.chainId);
+      noDomainIdFound.push(item.chainId as string);
     }
   }
   if (noDomainIdFound.length > 0) {
@@ -92,13 +95,12 @@ export const chainDataToMap = (data: any): Map<string, ChainData> => {
   return chainData;
 };
 
-export const getChainData = async (): Promise<Map<string, ChainData> | undefined> => {
+export const getChainData = async (logger?: Logger): Promise<Map<string, ChainData> | undefined> => {
   const url = "https://raw.githubusercontent.com/connext/chaindata/main/crossChain.json";
   try {
     const data = await fetchJson(url);
     return chainDataToMap(data);
-  } catch (err) {
-    console.error(`Error occurred retrieving chain data from ${url}`, err);
+  } catch (err: unknown) {
     // Check to see if we have the chain data cached locally.
     if (fs.existsSync("./chaindata.json")) {
       console.info("Using cached chain data.");
@@ -106,7 +108,13 @@ export const getChainData = async (): Promise<Map<string, ChainData> | undefined
       return chainDataToMap(data);
     }
     // It could be dangerous to let the router start without the chain data, but there's an override in place just in case.
-    console.warn("Could not fetch chain data, and no cached chain data was available.");
+    if (logger)
+      logger.warn(
+        `Could not fetch chain data, and no cached chain data was available.`,
+        undefined,
+        undefined,
+        jsonifyError(err as Error),
+      );
     return undefined;
   }
 };

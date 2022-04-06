@@ -17,7 +17,7 @@ export const getEnvConfig = (
 
   try {
     configJson = JSON.parse(process.env.SEQ_CONFIG || "");
-  } catch (e) {
+  } catch (e: unknown) {
     console.info("No SEQ_CONFIG exists; using config file and individual env vars.");
   }
   try {
@@ -28,13 +28,17 @@ export const getEnvConfig = (
       json = fs.readFileSync(path, { encoding: "utf-8" });
       configFile = JSON.parse(json);
     }
-  } catch (e) {
+  } catch (e: unknown) {
     console.error("Error reading config file!");
     process.exit(1);
   }
 
   const _sequencerConfig: SequencerConfig = {
-    redisUrl: process.env.SEQ_REDIS_URL || configJson.redisUrl || configFile.redisUrl || process.env.NXTP_REDIS_URL,
+    redis: {
+      host: process.env.SEQ_REDIS_HOST|| configJson.redis?.host || configFile.redis?.host,
+      port: process.env.SEQ_REDIS_PORT|| configJson.redis?.port || configFile.redis?.port || 6379,
+    },
+
     chains: process.env.SEQ_CHAIN_CONFIG
       ? JSON.parse(process.env.SEQ_CHAIN_CONFIG)
       : configJson.chains
@@ -66,14 +70,18 @@ export const getEnvConfig = (
     const chainRecommendedConfirmations = chainDataForChain?.confirmations ?? defaultConfirmations;
     // allow passed in address to override
     // format: { [domainId]: { { "deployments": { "connext": <address>, ... } }
-    if (!chainConfig.deployments?.connext) {
-      const res = chainDataForChain ? deployments.connext(chainDataForChain.chainId) : undefined;
-      if (!res) {
-        throw new Error(`No Connext contract address for domain ${domainId}`);
-      }
 
-      _sequencerConfig.chains[domainId].deployments.connext = res.address;
-    }
+    _sequencerConfig.chains[domainId].deployments = {
+      connext:
+        chainConfig.deployments?.connext ??
+        (() => {
+          const res = chainDataForChain ? deployments.connext(chainDataForChain.chainId) : undefined;
+          if (!res) {
+            throw new Error(`No Connext contract address for domain ${domainId}`);
+          }
+          return res.address;
+        })(),
+    };
 
     if (!chainConfig.subgraph.runtime) {
       _sequencerConfig.chains[domainId].subgraph.runtime = chainDataForChain?.subgraph ?? [];
