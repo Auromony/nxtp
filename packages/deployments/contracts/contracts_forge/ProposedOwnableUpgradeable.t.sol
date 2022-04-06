@@ -86,8 +86,8 @@ contract ProposedOwnableUpgradeableTest is ForgeConnextHelper {
   function testAlreadyRenouncedProposeRouterOwnershipRenunciation() public {
     renounceRouterOwnership(123456);
     vm.prank(connext.owner());
-    vm.expectRevert(abi.encodeWithSelector(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__renounceRouterOwnership_038.selector));
-    connext.renounceRouterOwnership();
+    vm.expectRevert(abi.encodeWithSelector(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__proposeRouterOwnershipRenunciation_noOwnershipChange.selector));
+    connext.proposeRouterOwnershipRenunciation();
   }
 
   // Should work
@@ -101,14 +101,14 @@ contract ProposedOwnableUpgradeableTest is ForgeConnextHelper {
   function testAlreadyRenouncedRenounceRouterOwnership() public {
     renounceRouterOwnership(123456);
     vm.prank(connext.owner());
-    vm.expectRevert(abi.encodeWithSelector(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__renounceRouterOwnership_038.selector));
+    vm.expectRevert(abi.encodeWithSelector(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__renounceRouterOwnership_noOwnershipChange.selector));
     connext.renounceRouterOwnership();
   }
 
   // should fail if no proposal was made
   function testNoProposalRenounceRouterOwnership() public {
     vm.prank(connext.owner());
-    vm.expectRevert(abi.encodeWithSelector(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__renounceRouterOwnership_037.selector));
+    vm.expectRevert(abi.encodeWithSelector(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__renounceRouterOwnership_noProposal.selector));
     connext.renounceRouterOwnership();
   }
 
@@ -117,7 +117,7 @@ contract ProposedOwnableUpgradeableTest is ForgeConnextHelper {
     uint256 timestamp = 123456;
     proposeRouterOwnershipRenunciation(timestamp);
     vm.prank(connext.owner());
-    vm.expectRevert(abi.encodeWithSelector(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__renounceRouterOwnership_030.selector));
+    vm.expectRevert(abi.encodeWithSelector(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__renounceRouterOwnership_delayNotElapsed.selector));
     connext.renounceRouterOwnership();
   }
 
@@ -132,7 +132,7 @@ contract ProposedOwnableUpgradeableTest is ForgeConnextHelper {
   function testAlreadyRenouncedProposeAssetOwnershipRenunciation() public {
     renounceAssetOwnership(123456);
     vm.prank(connext.owner());
-    vm.expectRevert(abi.encodeWithSelector(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__proposeAssetOwnershipRenunciation_038.selector));
+    vm.expectRevert(abi.encodeWithSelector(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__proposeAssetOwnershipRenunciation_noOwnershipChange.selector));
     connext.proposeAssetOwnershipRenunciation();
   }
 
@@ -148,14 +148,14 @@ contract ProposedOwnableUpgradeableTest is ForgeConnextHelper {
     renounceAssetOwnership(123456);
     assertTrue(connext.isAssetOwnershipRenounced());
     vm.prank(connext.owner());
-    vm.expectRevert(abi.encodeWithSelector(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__renounceAssetOwnership_038.selector));
+    vm.expectRevert(abi.encodeWithSelector(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__renounceAssetOwnership_noOwnershipChange.selector));
     connext.renounceAssetOwnership();
   }
 
   // should fail if no proposal was made
   function testNoProposalRenounceAssetOwnership() public {
     vm.prank(connext.owner());
-    vm.expectRevert(abi.encodeWithSelector(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__renounceAssetOwnership_037.selector));
+    vm.expectRevert(abi.encodeWithSelector(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__renounceAssetOwnership_noProposal.selector));
     connext.renounceAssetOwnership();
   }
 
@@ -164,7 +164,7 @@ contract ProposedOwnableUpgradeableTest is ForgeConnextHelper {
     uint256 timestamp = 123456;
     proposeAssetOwnershipRenunciation(timestamp);
     vm.prank(connext.owner());
-    vm.expectRevert(abi.encodeWithSelector(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__renounceAssetOwnership_030.selector));
+    vm.expectRevert(abi.encodeWithSelector(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__renounceAssetOwnership_delayNotElapsed.selector));
     connext.renounceAssetOwnership();
   }
 
@@ -177,14 +177,14 @@ contract ProposedOwnableUpgradeableTest is ForgeConnextHelper {
 
   // should fail if not called by owner
   function testOnlyOwnerCanProposeNewOwner() public {
-    vm.expectRevert(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__onlyOwner_029.selector);
+    vm.expectRevert(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__onlyOwner_notOwner.selector);
     connext.proposeNewOwner(successor);
   }
 
   // should fail if proposing the owner
   function testProposeSameOwner() public {
     vm.prank(admin);
-    vm.expectRevert(abi.encodeWithSelector(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__proposeNewOwner_038.selector));
+    vm.expectRevert(abi.encodeWithSelector(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__proposeNewOwner_noOwnershipChange.selector));
     connext.proposeNewOwner(admin);
   }
 
@@ -192,7 +192,7 @@ contract ProposedOwnableUpgradeableTest is ForgeConnextHelper {
   function testProposeDuplicateNewOwner() public {
     vm.startPrank(admin);
     connext.proposeNewOwner(successor);
-    vm.expectRevert(abi.encodeWithSelector(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__proposeNewOwner_036.selector));
+    vm.expectRevert(abi.encodeWithSelector(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__proposeNewOwner_invalidProposal.selector));
     connext.proposeNewOwner(successor);
     vm.stopPrank();
   }
@@ -207,7 +207,7 @@ contract ProposedOwnableUpgradeableTest is ForgeConnextHelper {
   // should fail if there was no proposal
   function testNoProposalRenounceOwnership() public {
     vm.prank(connext.owner());
-    vm.expectRevert(abi.encodeWithSelector(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__renounceOwnership_037.selector));
+    vm.expectRevert(abi.encodeWithSelector(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__renounceOwnership_noProposal.selector));
     connext.renounceOwnership();
   }
 
@@ -216,7 +216,7 @@ contract ProposedOwnableUpgradeableTest is ForgeConnextHelper {
     uint256 timestamp = 123456;
     proposeNewOwner(address(0), timestamp);
     vm.prank(connext.owner());
-    vm.expectRevert(abi.encodeWithSelector(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__renounceOwnership_030.selector));
+    vm.expectRevert(abi.encodeWithSelector(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__renounceOwnership_delayNotElapsed.selector));
     connext.renounceOwnership();
   }
 
@@ -226,7 +226,7 @@ contract ProposedOwnableUpgradeableTest is ForgeConnextHelper {
     proposeNewOwner(successor, timestamp);
     vm.warp(timestamp + connext.delay() + 1);
     vm.prank(connext.owner());
-    vm.expectRevert(abi.encodeWithSelector(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__renounceOwnership_036.selector));
+    vm.expectRevert(abi.encodeWithSelector(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__renounceOwnership_invalidProposal.selector));
     connext.renounceOwnership();
   }
 
@@ -236,7 +236,7 @@ contract ProposedOwnableUpgradeableTest is ForgeConnextHelper {
     proposeNewOwner(address(0), timestamp);
     vm.warp(timestamp + connext.delay() + 1);
     vm.prank(successor);
-    vm.expectRevert(abi.encodeWithSelector(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__onlyOwner_029.selector));
+    vm.expectRevert(abi.encodeWithSelector(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__onlyOwner_notOwner.selector));
     connext.renounceOwnership();
   }
 
@@ -253,7 +253,7 @@ contract ProposedOwnableUpgradeableTest is ForgeConnextHelper {
     proposeNewOwner(successor, timestamp);
     vm.warp(timestamp + 8 days);
     vm.prank(admin);
-    vm.expectRevert(abi.encodeWithSelector(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__onlyProposed_035.selector));
+    vm.expectRevert(abi.encodeWithSelector(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__onlyProposed_notProposedOwner.selector));
     connext.acceptProposedOwner();
   }
 
@@ -262,14 +262,14 @@ contract ProposedOwnableUpgradeableTest is ForgeConnextHelper {
     uint256 timestamp = 123456;
     proposeNewOwner(successor, timestamp);
     vm.prank(successor);
-    vm.expectRevert(abi.encodeWithSelector(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__acceptProposedOwner_030.selector));
+    vm.expectRevert(abi.encodeWithSelector(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__acceptProposedOwner_delayNotElapsed.selector));
     connext.acceptProposedOwner();
   }
 
   // Should fail if there is no change in ownership
   function testUnnecessaryAcceptProposedOwner() public {
     transferOwnership(successor, 123456);
-    vm.expectRevert(abi.encodeWithSelector(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__acceptProposedOwner_038.selector));
+    vm.expectRevert(abi.encodeWithSelector(ProposedOwnableUpgradeable.ProposedOwnableUpgradeable__acceptProposedOwner_noOwnershipChange.selector));
     vm.prank(successor);
     connext.acceptProposedOwner();
   }
