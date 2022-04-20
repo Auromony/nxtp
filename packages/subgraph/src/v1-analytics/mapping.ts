@@ -259,6 +259,12 @@ function getChainId(transactionManagerAddress: Address): BigInt {
     chainId = BigInt.fromI32(421611);
   } else if (network == "harmonyone") {
     chainId = BigInt.fromI32(1666600000);
+  } else if (network == "harmonyTest") {
+    chainId = BigInt.fromI32(1666700000);
+  } else if (network == "aurora") {
+    chainId = BigInt.fromI32(1313161554);
+  } else if (network == "auroraTestnet") {
+    chainId = BigInt.fromI32(1313161555);
   } else {
     // instantiate contract to get the chainId as a fallback
     chainId = TransactionManager.bind(transactionManagerAddress).getChainId();

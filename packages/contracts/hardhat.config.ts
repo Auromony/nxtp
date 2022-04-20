@@ -257,6 +257,21 @@ const config: HardhatUserConfig = {
       chainId: 1666600000,
       url: "https://api.harmony.one",
     },
+    harmonyTest: {
+      accounts,
+      chainId: 1666700000,
+      url: "https://api.s0.b.hmny.io",
+    },
+    aurora: {
+      accounts,
+      chainId: 1313161554,
+      url: "https://mainnet.aurora.dev",
+    },
+    auroraTestnet: {
+      accounts,
+      chainId: 1313161555,
+      url: "https://testnet.aurora.dev",
+    },
   },
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY,

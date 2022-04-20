@@ -6,6 +6,7 @@ const TEST_ROUTERS = [
   "0x0EC26F03e3dBA9bb5162D28fD5a3378A25f168d1", // rahul test router
   "0xDc150c5Db2cD1d1d8e505F824aBd90aEF887caC6", // ci/shared router
   "0x627306090abaB3A6e1400e9345bC60c78a8BEf57", // local router
+  "0xdc106BAfe0d7aFfb6b21B96EDCA5e0D790744892", // auromony dev account
 ];
 
 const SKIP_SETUP = [1, 10, 25, 56, 250, 288, 137, 100, 122, 1285, 42161, 43114, 1284, 2001, 192837465, 1666600000];
@@ -22,6 +23,8 @@ WRAPPED_ETH_MAP.set("43114", "0xb31f66aa3c1e785363f0875a1b74e27b85fd66c7"); // a
 WRAPPED_ETH_MAP.set("100", "0xe91D153E0b41518A2Ce8Dd3D7944Fa863463a97d"); // xdai wxDAI
 WRAPPED_ETH_MAP.set("1285", "0x98878B06940aE243284CA214f92Bb71a2b032B8A"); // moonriver wMOVR
 WRAPPED_ETH_MAP.set("1284", "0xAcc15dC74880C9944775448304B263D191c6077F"); // moonbeam wGLMR
+WRAPPED_ETH_MAP.set("1666700000", "0x7466d7d0c21fa05f32f5a0fa27e12bdc06348ce2"); // harmony testnet WONE
+WRAPPED_ETH_MAP.set("1313161555", "0xC9BdeEd33CD01541e1eeD10f90519d2C06Fe3feB"); // aurora testnet WETH
 /**
  * Hardhat task defining the contract deployments for nxtp
  *
@@ -103,6 +106,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment): Promise<voi
     log: true,
   });
 
+  // Setup
   if (!SKIP_SETUP.includes(parseInt(chainId))) {
     console.log("Deploying test token on non-mainnet chain");
     await hre.deployments.deploy("TestERC20", {
