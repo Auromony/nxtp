@@ -97,7 +97,7 @@ const config: HardhatUserConfig = {
     bob: { default: 2 },
     rando: { default: 3 },
     routerfactory: {
-      default: process.env.MNEMONIC_ROUTER_FACTORY ? "0xFD8c6Ebe0D284f9D2C9665f17BbA47032259E907" : 4,
+      default: process.env.MNEMONIC_ROUTER_FACTORY ? "0xdc106BAfe0d7aFfb6b21B96EDCA5e0D790744892" : 4, // Connext team's deployer address: "0xFD8c6Ebe0D284f9D2C9665f17BbA47032259E907"
     },
   },
   networks: {
