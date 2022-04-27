@@ -1,8 +1,4 @@
-# Auronomy Bridge
-
-Extending NXTP to cover bridging with Aurora and Harmony.
-
-#NXTP
+# NXTP
 
 [![Verify](https://github.com/connext/nxtp/actions/workflows/build-docker-image-and-verify.yml/badge.svg?branch=main)](https://github.com/connext/nxtp/actions/workflows/verify.yml) [![](https://img.shields.io/discord/454734546869551114?&logo=discord)](https://discord.gg/m93Sqf4) [![](https://img.shields.io/twitter/follow/ConnextNetwork?style=social)](https://twitter.com/ConnextNetwork)
 
@@ -12,7 +8,7 @@ Extending NXTP to cover bridging with Aurora and Harmony.
 
 The protocol is made up of a simple contract that uses a locking pattern to `prepare` and `fulfill` transactions, a network of offchain routers that participate in pricing auctions and pass calldata between chains, and a user-side sdk that finds routes and prompts onchain transactions.
 
-## Transaction Lifecycle
+## Workflow Overview
 
 ![HighLevelFlow](https://github.com/connext/nxtp/blob/main/packages/documentation/assets/HighLevelFlow.png)
 
@@ -26,50 +22,22 @@ If a transaction is not fulfilled within a fixed timeout, it reverts and can be 
 
 It is important to note that neither participant should require a store to complete these transactions. All information to `prepare`, `fulfill`, or `cancel` transactions should be retrievable through contract events.
 
-## Key Differences With Vector
-
-Benefits:
-
-1. Nxtp _only_ has onchain data. No offchain state or db at all. This means:
-   - Impossible for data to get out of sync
-   - TxService can be way simpler bc double collateralizations are impossible.
-   - No more iframe/browser state data.
-   - Out of the box perfect crash tolerance.
-   - We can use a subgraph out of the box for all of our data reading needs.
-   - Router can be _fully_ stateless.
-2. When the receiving side funds are unlocked, sender side is immediately able to be unlocked. This means it is not possible for liquidity to leak.
-3. All of our current functionality around crosschain transfers is preserved. Auctions and AMMs will work very easily on this.
-4. The protocol is stupidly simple (enough that we can reasonably build and test it in 2-3 weeks).
-
-Drawbacks/Risks:
-
-1. Nxtp is _only_ a protocol for (generalized) xchain transactions. It does not use channels (i.e. does not utilize offchain state). This means it cannot be used to do batched conditional transfers for the purposes of scalable micropayments.
-2. While there is great crash tolerance, there is a strong requirement that the router must reclaim its funds within a certain time window (we can set this how we like... presumably 48-96 hours). Note that the pessimistic channel case actually has this same liveness requirement, but it exists on both the user _and_ router.
-
 ## Architecture
 
 ![Architecture](https://github.com/connext/nxtp/blob/main/packages/documentation/assets/Architecture.png)
 
 This monorepo contains the following pieces:
 
-- [Contracts](https://github.com/connext/nxtp/tree/main/packages/contracts) - hold funds for all network participants, and lock/unlock based on data submitted by users and routers
-- [Subgraph](https://github.com/connext/nxtp/tree/main/packages/subgraph) - enables scalable querying/responding by caching onchain data and events.
-- [TxService](https://github.com/connext/nxtp/tree/main/packages/txservice) - resiliently attempts to send transactions to chain (with retries, etc.)
-- [Messaging](https://github.com/connext/nxtp/blob/main/packages/utils/src/messaging.ts) - prepares, sends, and listens for message data over [nats](https://nats.io)
-- [Router](https://github.com/connext/nxtp/tree/main/packages/router) - listens for events from messaging service and subgraph, and then dispatches transactions to txService
-- [SDK](https://github.com/connext/nxtp/tree/main/packages/sdk) - creates auctions, listens for events and creates transactions on the user side.
+### Backend
+- [Contracts](https://github.com/Auromony/nxtp/tree/main/packages/contracts) - hold funds for all network participants, and lock/unlock based on data submitted by users and routers
+- [Subgraph](https://github.com/Auromony/nxtp/tree/main/packages/subgraph) - enables scalable querying/responding by caching onchain data and events.
+- [TxService](https://github.com/Auromony/nxtp/tree/main/packages/txservice) - resiliently attempts to send transactions to chain (with retries, etc.)
+- [Messaging](https://github.com/Auromony/nxtp/blob/main/packages/utils/src/messaging.ts) - prepares, sends, and listens for message data over [nats](https://nats.io)
+- [Router](https://github.com/Auromony/nxtp/tree/main/packages/router) - listens for events from messaging service and subgraph, and then dispatches transactions to txService
+- [Integration](https://github.com/Auromony/nxtp/tree/main/packages/integration) - provides Docker Compose configurations for local hosting.
 
-## Internal Design Principles
-
-These are **important** and everyone must adhere to them:
-
-0. Keep it simple, stupid.
-
-1. Follow the Unix philosophy for every file and function. For instance, a `listeners.ts` file should _only_ handle setting up listeners and then route to a corresponding `handler`. This keeps all business logic consolidated, making it easy to test and read.
-
-2. Every file and function should be unit tested. The scope of this codebase is very small, so it shouldn't be difficult to do this.
-
-3. Build for future hires and contributors. Every function should have a top-level comment that describes what it does, and internal comments breaking down each step. Files should have comments delineating their reponsibilities. Remember: Good code is **never surprising**.
+### Frontend
+- [SDK](https://github.com/Auromony/nxtp/tree/main/packages/sdk) - creates auctions, listens for events and creates transactions on the user side.
 
 # Local Dev
 
@@ -101,7 +69,9 @@ Make sure you are on the latest yarn version:
 
 Try running `yarn` to update everything. If you have issues, try deleting `node_modules` and `yarn.lock`. After deleting `yarn.lock` run `touch yarn.lock` since it does not like if there is no lock file.
 
-## Common Tasks
+For deploying contracts, refer to [Contract Deployment](https://github.com/Auromony/nxtp/tree/main/packages/contracts#contract-deployment).
+
+### Common Tasks
 
 - `yarn`: Install deps, create symlinks, hoist packages.
 - `yarn build:all`: Build all packages.
@@ -284,3 +254,35 @@ The router will now hot reload and allow easy testing/debug.
 Now you can run `yarn workspace @connext/nxtp-integration test` to run integration tests against a local machine.
 
 When you are done, you can run `yarn docker:stop:all` to halt all running services.
+
+## Connext's Design Principles
+
+These are **important** and everyone must adhere to them:
+
+0. Keep it simple, stupid.
+
+1. Follow the Unix philosophy for every file and function. For instance, a `listeners.ts` file should _only_ handle setting up listeners and then route to a corresponding `handler`. This keeps all business logic consolidated, making it easy to test and read.
+
+2. Every file and function should be unit tested. The scope of this codebase is very small, so it shouldn't be difficult to do this.
+
+3. Build for future hires and contributors. Every function should have a top-level comment that describes what it does, and internal comments breaking down each step. Files should have comments delineating their reponsibilities. Remember: Good code is **never surprising**.
+
+## Key Differences With Vector
+
+Benefits:
+
+1. Nxtp _only_ has onchain data. No offchain state or db at all. This means:
+   - Impossible for data to get out of sync
+   - TxService can be way simpler bc double collateralizations are impossible.
+   - No more iframe/browser state data.
+   - Out of the box perfect crash tolerance.
+   - We can use a subgraph out of the box for all of our data reading needs.
+   - Router can be _fully_ stateless.
+2. When the receiving side funds are unlocked, sender side is immediately able to be unlocked. This means it is not possible for liquidity to leak.
+3. All of our current functionality around crosschain transfers is preserved. Auctions and AMMs will work very easily on this.
+4. The protocol is stupidly simple (enough that we can reasonably build and test it in 2-3 weeks).
+
+Drawbacks/Risks:
+
+1. Nxtp is _only_ a protocol for (generalized) xchain transactions. It does not use channels (i.e. does not utilize offchain state). This means it cannot be used to do batched conditional transfers for the purposes of scalable micropayments.
+2. While there is great crash tolerance, there is a strong requirement that the router must reclaim its funds within a certain time window (we can set this how we like... presumably 48-96 hours). Note that the pessimistic channel case actually has this same liveness requirement, but it exists on both the user _and_ router.
