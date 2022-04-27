@@ -1,4 +1,4 @@
-# Nxtp Contracts
+# NXTP Contracts
 
 ## System Overview
 
@@ -6,7 +6,7 @@
 
 [Security walkthrough video](https://youtu.be/dQ64SOu5B2s)
 
-### TLDR
+### Summary
 
 NXTP is designed to facilitate crosschain transactions via simple atomic swaps where one party provides the liquidity of `assetA` on `chainA` and the other provides the liquidity of `assetB` on `chainB`.
 
@@ -17,17 +17,7 @@ There are two main offchain agents:
 
 When using NXTP to perform a crosschain swap, a user first locks liquidity of `assetA` on `chainA`, waits for the router to lock `assetB` on `chainB`, and finally is able to unlock the funds by providing a signature and submitting it to a contract that exists on `chainB`. The router can use this same signature to unlock the funds the user locked on `chainA`. If something goes wrong, or the payment expires, the transfer may also be cancelled, and the funds returned to their original owner.
 
-### Transaction Lifecycle
-
-![HighLevelFlow](https://github.com/connext/nxtp/blob/main/packages/documentation/assets/HighLevelFlow.png)
-
-Transactions go through three phases:
-
-1. **Route Auction**: User broadcasts to our network signalling their desired route. Routers respond with sealed bids containing commitments to fulfilling the transaction within a certain time and price range. This step allows the user to select which router will participate in the transaction.
-2. **Prepare**: Once the auction is completed, the transaction can be prepared. The user submits a transaction to `TransactionManager` contract on sender-side chain containing router's signed bid. This transaction locks up the users funds on the sending chain. Upon detecting an event containing their signed bid from the chain, router submits the same data to the `TransactionManager` on the receiver-side chain, and locks up a corresponding amount of liquidity. The amount locked on the receiving chain is `sending amount - fee` so the router is incentivized to complete the transaction (they pocket the difference).
-3. **Fulfill**: Upon detecting the `TransactionPrepared` event on the receiver-side chain, the user signs a message and sends it to a relayer, who will earn a fee for submission. The relayer (which may be the router) then submits the message to the `TransactionManager` to complete their transaction on receiver-side chain and claim the funds locked by the router. A relayer is used here to allow users to submit transactions with arbitrary calldata on the receiving chain without needing gas to do so. The router then submits the same signed message and completes transaction on sender-side, unlocking the original `amount`.
-
-If a transaction is not fulfilled within a fixed timeout, it reverts and can be reclaimed by the party that called `prepare` on each chain (initiator). Additionally, transactions can be cancelled unilaterally by the person owed funds on that chain (router for sending chain, user for receiving chain) prior to expiry.
+For workflow overview, refer to [Workflow Overview](https://github.com/Auromony/nxtp#workflow-overview).
 
 ### Key Principles
 
@@ -42,7 +32,7 @@ If a transaction is not fulfilled within a fixed timeout, it reverts and can be 
 
 The more detailed flow can be seen below:
 
-![Contracts Flow](https://github.com/connext/nxtp/blob/main/packages/documentation/assets/ContractsFlow@2x.png)
+![Contracts Flow](../documentation/assets/ContractsFlow@2x.png)
 
 There are three key functions in the contract: `prepare`, `fulfill`, and `cancel`.
 
@@ -76,7 +66,7 @@ Error codes thrown by the contracts have the following structure:
 
 where the `prefix` denotes which function or portion of the code the error is coming from and `code` corresponds to a given error message.
 
-The error definitions can be found [here](https://github.com/connext/nxtp/blob/c4-59/packages/contracts/src/errors.ts).
+The error definitions can be found [here](./src/errors.ts).
 
 ## Development
 
@@ -112,35 +102,46 @@ nxtp$ yarn workspace @connext/nxtp-contracts coverage
 
 This command will output the coverage status instead of the gas estimates.
 
-### Contract Deployment
+### Core Contract Deployment
 
-Contracts are deployed via the [hardhat deploy](https://hardhat.org/plugins/hardhat-deploy.html). Before deploying any contracts, make sure the [deploy](https://github.com/connext/nxtp/blob/main/modules/contracts/deploy/deploy.ts) script used is up to date with the contracts you will need deployed.
+Contracts are deployed via the [hardhat deploy](https://hardhat.org/plugins/hardhat-deploy.html). Before deploying any contracts, make sure the [deploy](./deploy/deploy.ts) script used is up to date with the contracts you will need deployed.
 
-To deploy the contracts:
+To deploy the core contracts:
 
 1. Obtain a funded mnemonic, provider url, and the [chain id](https://chainid.network) for the network(s) you would like to deploy the contracts to. There is no ownership of the contracts, so the mnemonic is not systemically important. Run the following commands:
 
 ```sh
-export MNEMONIC="<YOUR_MNEMONIC_HERE>"
-export ETH_PROVIDER_URL="<YOUR_PROVIDER_URL_HERE>"
+export MNEMONIC="<MNEMONIC_HERE>" # mnemonic of transaction calling EOA (e.g. deployer)
+export MNEMONIC_ROUTER_FACTORY="<ROUTER_FACTORY_DEPLOYER_MNEMONIC_HERE>" # optional, for deploying router factory contract; can be the same as core contract deployer's mnemonic
+export ETH_PROVIDER_URL="<PROVIDER_URL_HERE>" # RPC
 export CHAIN_ID="<CHAIN_ID_HERE>"
-export ETHERSCAN_API_KEY="<ETHERSCAN_API_KEY_HERE>" # optional to run verification task, but highly recommended
+export ETHERSCAN_API_KEY="<ETHERSCAN_API_KEY_HERE>" # optional, for contract verification
 ```
 
-You can also add a `.env` to the `packages/contracts` dir with the above env vars.
+Alternatively, you can create a `.env` file in `packages/contracts` with the above env vars. `.env.example` is available in the directory for copying and modifying.
 
 2. Once the proper environment variables are added to your environment, you can begin the contract deployments by running the following from the root directory:
 
 ```sh
-yarn workspace @connext/nxtp-contracts hardhat deploy --network \<NETWORK_NAME\> # e.g. yarn workspace @connext/nxtp-contracts deploy --network goerli
+yarn workspace @connext/nxtp-contracts hardhat deploy --network <NETWORK_NAME> # e.g. yarn workspace @connext/nxtp-contracts deploy --network goerli
 ```
 
-You should use the `NETWORK_NAME` that corresponds to the correct network within the `hardhat.config.ts` file.
+You should use the `NETWORK_NAME` that corresponds to the correct network within the `hardhat.config.ts` file. Use:
+* `harmonyTest` for Harmony Testnet
+* `auroraTestnet` for Aurora Testnet
 
-3. (optional) To verify the contracts (works with Etherscan-based networks):
+**Note:** To ease router operation with identical core contract addresses, the contracts must be deployed with the same deployer EOA at the same account nonce on different networks.
+
+3. (Optional) To verify the core contracts (works with Etherscan-based networks):
 
 ```sh
-yarn workspace @connext/nxtp-contracts hardhat etherscan-verify --solc-input --network \<NETWORK_NAME\>
+yarn workspace @connext/nxtp-contracts hardhat etherscan-verify --solc-input --network <NETWORK_NAME>
+```
+
+If encountered with errors, you can alternatively run:
+
+```sh
+yarn workspace @connext/nxtp-contracts hardhat verify --network <NETWORK_NAME> <CONTRACT_ADDRESS> "<CONSTRUCTOR_ARGUMENT_1>"
 ```
 
 4. Once the contracts have been deployed, export them using:
@@ -149,9 +150,79 @@ yarn workspace @connext/nxtp-contracts hardhat etherscan-verify --solc-input --n
 yarn workspace @connext/nxtp-contracts export
 ```
 
-**NOTE:** Once you have deployed the contracts, you will then need to update (if necessary) and redeploy the subgraphs. See [here](https://github.com/connext/nxtp/tree/main/modules/subgraph) for details.
+**NOTE:** For any necessary changes introduced by the deployed contracts, you will then need to update and redeploy the subgraphs. See [here](../subgraph) for details.
 
-## How to set price information in ConnextPriceOracle
+## Helper Tasks
+
+There are helper tasks defined in the [`./src/tasks`](./src/tasks) directory. They  can be runned as follows:
+
+### Whitelisting
+
+After core contracts are deployed, the temporary core contract owner (i.e. deployer in previous step if no owner change) may whitelist routers and supported assets of the bridging service.
+
+1. Whitelist router EOA using:
+
+```sh
+yarn workspace @connext/nxtp-contracts hardhat add-router --network <NETWORK_NAME> --router <ROUTER_ADDRESS>
+```
+
+2. Whitelist asset using:
+
+```sh
+yarn workspace @connext/nxtp-contracts hardhat add-asset --network <NETWORK_NAME> --asset-id <ASSET_ADDRESS>
+```
+
+#### Whitelisting for Multiple Networks
+
+To whitelist a router on multiple networks:
+
+```sh
+yarn workspace @connext/nxtp-contracts whitelist <ROUTER_ADDRESS>
+```
+
+### Router Contract Deployment
+
+To deploy a router contract:
+
+1. (Optional) You may want to modify the `.env` file to deploy router contracts with a different deployer EOA mnemonic as to preserve the account nonce of core contract deployer.
+
+2. Deploy the router contract:
+
+```sh
+yarn workspace @connext/nxtp-contracts hardhat create-router --network <NETWORK_NAME> --signer <ROUTER_ADDRESS> --recipient <RECIPIENT_ADDRESS>
+```
+
+The recipient is the address receiving the fees of routing service. The same `ROUTER_ADDRESS` can be used for `RECIPIENT_ADDRESS` for simplicity.
+
+3. (Optional) To verify the router contract (works with Etherscan-based networks):
+
+```sh
+yarn workspace @connext/nxtp-contracts hardhat etherscan-verify --solc-input --network <NETWORK_NAME>
+```
+
+#### Router Contract Deployment for Multiple Networks
+
+To deploy router contracts with the same router and recipient on multiple networks:
+
+```sh
+yarn workspace @connext/nxtp-contracts create-router <ROUTER_ADDRESS> <RECIPIENT_ADDRESS>
+```
+
+### Add Liquidity
+
+Add liquidity to the bridging service. Called by whitelisted routers.
+
+1. Modify the `.env` file to call the transaction with the router EOA mnemonic.
+
+2. Add liquidity:
+
+```sh
+yarn workspace @connext/nxtp-contracts hardhat add-liquidity --network <NETWORK_NAME> --amount <AMOUNT> --router <ROUTER_ADDRESS> --asset-id <ASSET_ADDRESS>
+```
+
+**Note:** Supplement zeroes in `AMOUNT` to account for asset's decimals. E.g. `1000000000000000000` for 1 WETH (an asset with 18 decimals).
+
+### Set Price Information in ConnextPriceOracle
 
 Price Oracle fetches token price from chainlink protocol and decentralized exchanges such as uniswap, sushiswap, pancakeswap, etc.
 There are two types of tokens. First ones are listed on Chainlink Protocol. But others aren't listed on Chainlink protocol.
@@ -175,7 +246,6 @@ yarn workspace @connext/nxtp-contracts hardhat set-dex-price --token TOKEN_ADDRE
 # 0xc778417E063141139Fce010982780140Aa0cD5Ab: WETH on Rinkeby
 # 0x21F644B1433D1744a84dc0616C0BFfC04D3A45eb: WETH-DOGE LP on Rinkeby
 
-
 'TOKEN_ADDRESS': The token address that you want to fetch price of.
 
 'BASE_TOKEN_ADDRESS': The base token address used to add liquidity on DEX. Its price should be able to be fetched from Chainlink protocol.
@@ -194,36 +264,4 @@ yarn workspace @connext/nxtp-contracts hardhat set-direct-price --token TOKEN_AD
 'TOKEN_ADDRESS': The token address that you want to fetch price of.
 
 'TOKEN_PRICE': The direct price of token.
-```
-
-## Helper Tasks
-
-There are helper tasks defined in the [`./src/tasks`](./src/tasks) directory. These can be run using the following example command structure:
-
-```sh
-yarn workspace @connext/nxtp-contracts hardhat add-liquidity --network goerli --amount 2500000000000000000000000 --router 0xDc150c5Db2cD1d1d8e505F824aBd90aEF887caC6 --asset-id 0x8a1Cad3703E0beAe0e0237369B4fcD04228d1682
-```
-
-- Deploy Router Factory
-
-```sh
-yarn workspace @connext/nxtp-contracts hardhat deploy-router-factory --network <Network-Name> --signer <Router Signer> --recipient <Router Recipient>
-```
-
-- Create Router Contract
-
-```sh
-yarn workspace @connext/nxtp-contracts hardhat create-router --network <Network-Name> --signer <Router Signer> --recipient <Router Recipient>
-```
-
-# whitelist command for multiple networks
-
-```sh
-yarn workspace @connext/nxtp-contracts whitelist <router-address>
-```
-
-# create-router for RouterContract multiple network in one-step
-
-```sh
-yarn workspace @connext/nxtp-contracts create-router <signer-address> <recipient-address>
 ```
