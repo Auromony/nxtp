@@ -6,12 +6,12 @@
   },
   {
     "network": "auroraTestnet",
-    "address": "0x5870101f7311dDC37f8238677AC2d9151f53b081",
+    "address": "0x6DF9bfEA6A9f72e49dE13F1544558fBA37337DB4",
     "startBlock": 87751619
   },
   {
     "network": "harmonyTest",
-    "address": "0x5870101f7311dDC37f8238677AC2d9151f53b081",
+    "address": "0x6DF9bfEA6A9f72e49dE13F1544558fBA37337DB4",
     "startBlock": 24203024
   }
 ]

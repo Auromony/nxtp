@@ -15,6 +15,8 @@ export const CHAIN_ID = {
   MOVR: 1285,
   ARBITRUM: 42161,
   AVALANCHE: 43114,
+  AURORA_TESTNET: 1313161555,
+  HARMONY_TESTNET: 1666700000
 };
 
 export type ChainData = {
@@ -79,16 +81,16 @@ export const chainDataToMap = (data: any): Map<string, ChainData> => {
 };
 
 export const getChainData = async (): Promise<Map<string, ChainData> | undefined> => {
-  const url = "https://raw.githubusercontent.com/connext/chaindata/main/crossChain.json";
+  const url = "https://raw.githubusercontent.com/Auromony/chaindata/main/crossChain.json";
   try {
     const data = await fetchJson(url);
     return chainDataToMap(data);
   } catch (err) {
     console.error(`Error occurred retrieving chain data from ${url}`, err);
     // Check to see if we have the chain data cached locally.
-    if (fs.existsSync("./chaindata.json")) {
+    if (fs.existsSync("./crossChain")) {
       console.info("Using cached chain data.");
-      const data = JSON.parse(fs.readFileSync("./chaindata.json", "utf-8"));
+      const data = JSON.parse(fs.readFileSync("./crossChain", "utf-8"));
       return chainDataToMap(data);
     }
     // It could be dangerous to let the router start without the chain data, but there's an override in place just in case.

@@ -250,8 +250,8 @@ export const getEnvConfig = (crossChainData: Map<string, any> | undefined): Nxtp
       ? configJson.swapPools
       : configFile.swapPools,
     logLevel: process.env.NXTP_LOG_LEVEL || configJson.logLevel || configFile.logLevel || "info",
-    port: process.env.NXTP_PORT || configJson.port || configFile.port || 8080,
-    metrics_port: process.env.NXTP_METRICS_PORT || configJson.metrics_port || configFile.metrics_port || 8081,
+    port: process.env.NXTP_PORT || configJson.port || configFile.port || 8180,
+    metrics_port: process.env.NXTP_METRICS_PORT || configJson.metrics_port || configFile.metrics_port || 8181,
     host: process.env.NXTP_HOST || configJson.host || configFile.host || "0.0.0.0",
     metrics_host: process.env.NXTP_METRICS_HOST || configJson.metrics_host || configFile.metrics_host || "0.0.0.0",
     requestLimit: process.env.NXTP_REQUEST_LIMIT || configJson.requestLimit || configFile.requestLimit || 500,

@@ -1,24 +1,42 @@
 {
-  "adminToken": "blahblah",
+  "adminToken": "sneakysneaky",
   "chainConfig": {
     "1": {
-      "providers": ["https://mainnet.infura.io/v3/"]
+      "providers": ["https://mainnet.infura.io/v3/..."]
     },
-    "4": {
-      "providers": ["https://rinkeby.infura.io/v3/"]
+    "1313161555": {
+      "providers": [
+        "https://testnet.aurora.dev/"
+      ],
+      "transactionManagerAddress": "0x6DF9bfEA6A9f72e49dE13F1544558fBA37337DB4",
+      "subgraph": ["http://localhost:8000/subgraphs/name/connext/nxtp-aurora-testnet"],
+      "allowRelay": true,
+      "subgraphSyncBuffer": 1300
     },
-    "5": {
-      "providers": ["https://goerli.infura.io/v3/"]
+    "1666700000": {
+      "providers": ["https://api.s0.b.hmny.io"],
+      "transactionManagerAddress": "0x6DF9bfEA6A9f72e49dE13F1544558fBA37337DB4",
+      "subgraph": ["http://localhost:8000/subgraphs/name/connext/nxtp-harmony-testnet"],
+      "allowRelay": true,
+      "subgraphSyncBuffer": 50
     }
   },
   "logLevel": "info",
-  "mnemonic": "candy maple cake sugar pudding cream honey rich smooth crumble sweet treat",
+  "network": "testnet",
+  "web3SignerUrl": "http://localhost:9000",
+  "routerContractAddress": "0xf80e98359eb8d9aaF4DAB0938624f9C5c3AE0c81",
   "swapPools": [
     {
       "name": "TEST",
       "assets": [
-        { "chainId": 4, "assetId": "0x9aC2c46d7AcC21c881154D57c0Dc1c55a3139198" },
-        { "chainId": 5, "assetId": "0x8a1Cad3703E0beAe0e0237369B4fcD04228d1682" }
+        {
+          "chainId": 1313161555,
+          "assetId": "0x2382d68Eb94dAAC4f2F52Bac9502e30828254F01"
+        },
+        {
+          "chainId": 1666700000,
+          "assetId": "0x260f9c0d2a62b45c720a61ab839b31b6883d22ef"
+        }
       ]
     }
   ]
