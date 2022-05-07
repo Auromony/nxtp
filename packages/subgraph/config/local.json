@@ -5,9 +5,19 @@
     "startBlock": 0
   },
   {
+    "network": "aurora",
+    "address": "0x777deb0F8304fB6289450AfeC04b37108cB795d3",
+    "startBlock": 65025947
+  },
+  {
     "network": "auroraTestnet",
     "address": "0x6DF9bfEA6A9f72e49dE13F1544558fBA37337DB4",
     "startBlock": 87751619
+  },
+  {
+    "network": "harmonyone",
+    "address": "0x777deb0F8304fB6289450AfeC04b37108cB795d3",
+    "startBlock": 26179950
   },
   {
     "network": "harmonyTest",
